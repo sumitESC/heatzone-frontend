@@ -819,7 +819,7 @@ const MessageRow = React.memo(({ msg, isStreaming, currentStatus }: { msg: ChatM
 // ============================================================================
 export function Chatbot({ contextData }: { contextData: any }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [provider, setProvider] = useState<"gemini" | "groq">("groq");
+  const provider = "groq";
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -1068,14 +1068,6 @@ export function Chatbot({ contextData }: { contextData: any }) {
           <div><h3 className="font-bold text-gray-900 dark:text-white tracking-wide">Aria Intelligence</h3><p className="text-[11px] text-purple-600 dark:text-purple-300 font-medium tracking-wider uppercase">Urban Climate Platform</p></div>
         </div>
         <div className="flex items-center gap-2">
-          <select 
-            value={provider} 
-            onChange={(e) => setProvider(e.target.value as "gemini" | "groq")}
-            className="bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs font-medium outline-none cursor-pointer focus:border-purple-500/50"
-          >
-            <option value="gemini" className="bg-white dark:bg-[#050509]">Gemini 1.5</option>
-            <option value="groq" className="bg-white dark:bg-[#050509]">Groq (Llama 3)</option>
-          </select>
           <button onClick={() => setIsTTSActive(!isTTSActive)} className={cn("p-2.5 rounded-full transition-colors border", isTTSActive ? "bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/30" : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-white/10")}>
             {isTTSActive ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
           </button>
