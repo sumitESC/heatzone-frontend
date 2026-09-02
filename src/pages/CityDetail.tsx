@@ -142,7 +142,7 @@ export default function CityDetail() {
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent pointer-events-none" />
         
         <div className="relative z-10">
-          <h1 className="text-4xl md:text-5xl font-display font-extrabold text-white mb-3">{city?.name || "City Profile"}</h1>
+          <h1 className="text-4xl md:text-5xl font-display font-extrabold text-foreground mb-3">{city?.name || "City Profile"}</h1>
           <div className="flex flex-wrap items-center gap-3">
             <HeatZoneBadge zone={latestPrediction?.heatZone || 'moderate'} className="text-sm px-4 py-1.5" />
             <span className="text-muted-foreground flex items-center gap-1.5 text-sm font-medium">
@@ -180,7 +180,7 @@ export default function CityDetail() {
           <Brain className="w-8 h-8 text-primary" />
         </div>
         <div className="flex-1 text-center md:text-left">
-          <h2 className="text-lg font-bold text-white flex items-center justify-center md:justify-start gap-2 mb-1">
+          <h2 className="text-lg font-bold text-foreground flex items-center justify-center md:justify-start gap-2 mb-1">
             Causal Intelligence Engine
             <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-md font-mono">PyTorch Ensemble v2.0</span>
           </h2>
@@ -190,7 +190,7 @@ export default function CityDetail() {
         </div>
         <div className="shrink-0 flex flex-col items-center gap-1">
           <span className="text-[10px] font-bold uppercase text-muted-foreground whitespace-nowrap">Primary Risk Driver</span>
-          <div className="bg-secondary/50 border border-border px-4 py-2 rounded-xl text-sm font-bold text-white shadow-sm flex items-center gap-2">
+          <div className="bg-secondary/50 border border-border px-4 py-2 rounded-xl text-sm font-bold text-foreground shadow-sm flex items-center gap-2">
             <Zap className="w-4 h-4 text-yellow-400" />
             {latestPrediction?.primaryRiskDriver || "Morphology"}
           </div>
@@ -518,7 +518,7 @@ export default function CityDetail() {
               initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.4 }}
               className="flex flex-col gap-3"
             >
-              <h3 className="font-bold text-lg text-white mb-1">AI Interventions</h3>
+              <h3 className="font-bold text-lg text-foreground mb-1">AI Interventions</h3>
               {safeRecommendations.slice(0, 3).map((rec, i) => (
                 <div key={rec.id} className="bg-secondary/40 border border-border/50 rounded-xl p-4 hover:bg-secondary transition-colors">
                   <div className="flex justify-between items-start mb-2">

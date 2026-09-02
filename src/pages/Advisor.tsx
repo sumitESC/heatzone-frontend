@@ -47,7 +47,7 @@ export default function Advisor() {
         <div className="relative z-30 w-full">
           <div className="flex items-center gap-3 mb-3">
             <Brain className="w-8 h-8 text-purple-400" />
-            <h1 className="text-3xl md:text-4xl font-display font-extrabold text-white">AI Heat Reduction Advisor</h1>
+            <h1 className="text-3xl md:text-4xl font-display font-extrabold text-foreground">AI Heat Reduction Advisor</h1>
           </div>
           <p className="text-muted-foreground max-w-2xl text-sm md:text-base mb-6">
             Leverage AI to analyze key urban factors for UP cities and generate actionable intelligence for reducing the urban heat island effect.

@@ -365,7 +365,7 @@ export default function Forecast() {
         <div className="relative z-30 w-full">
           <div className="flex items-center gap-3 mb-3">
             <CalendarDays className="w-8 h-8 text-purple-400" />
-            <h1 className="text-3xl md:text-4xl font-display font-extrabold text-white">
+            <h1 className="text-3xl md:text-4xl font-display font-extrabold text-foreground">
               16-Day AI Forecast
             </h1>
           </div>

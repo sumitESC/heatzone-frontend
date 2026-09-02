@@ -82,7 +82,7 @@ export default function MapPage() {
   return (
     <div className="space-y-6">
       <div className="shrink-0">
-        <h1 className="text-3xl font-display font-bold text-white mb-2">Geospatial Analysis</h1>
+        <h1 className="text-3xl font-display font-bold text-foreground mb-2">Geospatial Analysis</h1>
         <p className="text-muted-foreground">Interactive map of Uttar Pradesh urban heat islands.</p>
       </div>
 

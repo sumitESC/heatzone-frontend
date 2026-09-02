@@ -29,7 +29,7 @@ export default function Analytics() {
   return (
     <div className="space-y-8 pb-12">
       <div>
-        <h1 className="text-3xl font-display font-bold text-white mb-2">Comparative Analytics</h1>
+        <h1 className="text-3xl font-display font-bold text-foreground mb-2">Comparative Analytics</h1>
         <p className="text-muted-foreground">Cross-city analysis of heat contributors across Uttar Pradesh.</p>
       </div>
 
