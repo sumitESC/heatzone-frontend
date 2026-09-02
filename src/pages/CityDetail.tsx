@@ -33,6 +33,41 @@ function CityMapController() {
   return null;
 }
 
+function getWeatherDisplay(f: any) {
+  const maxT = Math.round(f.Temp_Max_C ?? f.tempMax ?? 34);
+  const minT = Math.round(f.Temp_Min_C ?? f.tempMin ?? 24);
+  const rain = f.Precipitation_mm ?? f.rainfall ?? 0;
+  const hum = f.Humidity_Mean_pct ?? f.humidity ?? 55;
+  const condStr = (f.primary_driver || f.weatherMain || f.condition || "").toLowerCase();
+
+  if (rain > 12 || condStr.includes("thunder") || condStr.includes("storm")) {
+    return { label: "Thunderstorm", icon: <CloudLightning className="w-5 h-5 text-purple-400 animate-pulse" />, color: "text-purple-400" };
+  }
+  if (rain > 6) {
+    return { label: "Heavy Rain", icon: <CloudRain className="w-5 h-5 text-blue-500 animate-bounce" />, color: "text-blue-500" };
+  }
+  if (rain > 2) {
+    return { label: "Moderate Rain", icon: <CloudRain className="w-5 h-5 text-blue-400" />, color: "text-blue-400" };
+  }
+  if (rain > 0.2 || condStr.includes("drizzle") || condStr.includes("light rain")) {
+    return { label: "Light Rain", icon: <CloudDrizzle className="w-5 h-5 text-sky-400" />, color: "text-sky-400" };
+  }
+  if (maxT < 22 || condStr.includes("cold")) {
+    return { label: "Cold & Chilly", icon: <Thermometer className="w-5 h-5 text-cyan-400" />, color: "text-cyan-400" };
+  }
+  if (hum > 75 || condStr.includes("overcast") || condStr.includes("cloud")) {
+    return { label: "Overcast", icon: <Cloud className="w-5 h-5 text-gray-300" />, color: "text-gray-300" };
+  }
+  if (hum > 60 || condStr.includes("partly")) {
+    return { label: "Partly Cloudy", icon: <CloudSun className="w-5 h-5 text-amber-300" />, color: "text-amber-300" };
+  }
+  if (maxT > 38 || condStr.includes("scorch") || condStr.includes("heat")) {
+    return { label: "Extreme Heat", icon: <Sun className="w-5 h-5 text-red-500 animate-pulse" />, color: "text-red-500" };
+  }
+
+  return { label: "Sunny & Clear", icon: <Sun className="w-5 h-5 text-yellow-400" />, color: "text-yellow-400" };
+}
+
 export default function CityDetail() {
   const [, params] = useRoute<{ cityId: string }>("/city/:cityId");
   const parsedId = params?.cityId ? parseInt(params.cityId, 10) : 1;
@@ -70,19 +105,31 @@ export default function CityDetail() {
         setLoadingForecast(false);
       }
 
-      // Safe 16-day simulation fallback
+      // Safe diverse 16-day weather simulation
+      const conditionsList = [
+        { main: "Sunny & Clear", max: 35, min: 24, rain: 0, hum: 45 },
+        { main: "Partly Cloudy", max: 33, min: 23, rain: 0, hum: 62 },
+        { main: "Light Rain", max: 30, min: 22, rain: 2.4, hum: 75 },
+        { main: "Heavy Rain", max: 28, min: 21, rain: 14.2, hum: 88 },
+        { main: "Thunderstorm", max: 27, min: 20, rain: 24.0, hum: 92 },
+        { main: "Overcast", max: 29, min: 22, rain: 0.5, hum: 78 },
+        { main: "Cold & Chilly", max: 20, min: 12, rain: 0, hum: 50 },
+        { main: "Extreme Heat", max: 41, min: 29, rain: 0, hum: 35 },
+      ];
+
       setCityForecast(Array.from({ length: 16 }, (_, i) => {
         const d = new Date();
         d.setDate(d.getDate() + i);
+        const item = conditionsList[i % conditionsList.length];
         return {
           date: d.toISOString().split("T")[0],
-          Temp_Max_C: (data.latestPrediction?.temperature || 34) + (i % 3) - 1,
-          Temp_Min_C: (data.latestPrediction?.temperature || 34) - 8 + (i % 2),
-          Precipitation_mm: i === 2 || i === 7 ? 6.4 : (i % 5 === 0 ? 1.2 : 0),
-          Humidity_Mean_pct: (data.latestWeather?.humidity || 55) + (i % 4) * 3,
-          Wind_Speed_Max_kmh: 9 + (i % 3),
-          heat_risk_score: (data.latestPrediction?.heatRiskScore || 60) + (i % 4) * 2 - 3,
-          primary_driver: "Urban Canyon"
+          Temp_Max_C: item.max,
+          Temp_Min_C: item.min,
+          Precipitation_mm: item.rain,
+          Humidity_Mean_pct: item.hum,
+          Wind_Speed_Max_kmh: 8 + (i % 5),
+          heat_risk_score: Math.min(100, Math.max(20, (item.max - 20) * 3)),
+          primary_driver: item.main
         };
       }));
     };
@@ -216,6 +263,7 @@ export default function CityDetail() {
               const minT = Math.round(f.Temp_Min_C ?? f.tempMin ?? 24);
               const rain = f.Precipitation_mm ?? f.rainfall ?? 0;
               const hum = f.Humidity_Mean_pct ?? f.humidity ?? 55;
+              const display = getWeatherDisplay(f);
               
               let dateLabel = `Day ${idx + 1}`;
               if (f.date) {
@@ -227,15 +275,18 @@ export default function CityDetail() {
               }
 
               return (
-                <div key={idx} className="flex-none w-[150px] bg-secondary/30 border border-border/50 rounded-xl p-3.5 snap-start hover:border-primary/40 transition-colors">
+                <div key={idx} className="flex-none w-[160px] bg-secondary/30 border border-border/50 rounded-xl p-3.5 snap-start hover:border-primary/40 transition-colors">
                   <p className="text-[11px] font-bold text-muted-foreground uppercase">{dateLabel}</p>
                   <div className="flex items-center justify-between my-2">
-                    {rain > 2 ? <CloudRain className="w-6 h-6 text-blue-400" /> : <Sun className="w-6 h-6 text-yellow-400" />}
+                    {display.icon}
                     <div className="text-right">
                       <span className="text-lg font-bold text-red-400">{maxT}°</span>
                       <span className="text-xs text-muted-foreground ml-1">{minT}°</span>
                     </div>
                   </div>
+                  <p className={cn("text-[10px] font-extrabold uppercase mb-2 truncate", display.color)}>
+                    {display.label}
+                  </p>
                   <div className="space-y-1 text-[11px] text-muted-foreground pt-1 border-t border-border/40">
                     <div className="flex justify-between">
                       <span className="flex items-center gap-1"><CloudRain className="w-3 h-3 text-blue-400" /> Rain</span>
