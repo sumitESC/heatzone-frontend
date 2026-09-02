@@ -485,6 +485,25 @@ export async function customFetch<T = unknown>(
       console.error("Error mapping ML response", e);
     }
 
+    if (!data || (typeof data === "object" && Object.keys(data).length === 0) || (Array.isArray(data) && data.length === 0)) {
+      const fallback = handleFallback(urlStr);
+      if (fallback !== null) {
+        return fallback as T;
+      }
+    }
+
+    if (urlStr.includes("/api/datasets/overview") && (!data || typeof data !== "object" || !data.totalCities || data.totalCities === 0)) {
+      return getFallbackOverview() as T;
+    }
+
+    if (urlStr.includes("/api/heatzone/all") && (!data || !Array.isArray(data) || data.length === 0)) {
+      return FALLBACK_CITIES.map(getFallbackHeatPrediction) as T;
+    }
+
+    if (urlStr.includes("/api/cities") && (!data || !Array.isArray(data) || data.length === 0)) {
+      return FALLBACK_CITIES as T;
+    }
+
     return data as T;
   } catch (err: any) {
     const fallback = handleFallback(urlStr);
