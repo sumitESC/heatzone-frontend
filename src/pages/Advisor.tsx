@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useGetCities, useGetCityDataset } from "@workspace/api-client-react";
+import { useGetCities, useGetCityDataset, FALLBACK_CITIES, getFallbackCityDataset } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -9,14 +9,12 @@ import { cn } from "@/lib/utils";
 import { Chatbot } from "@/components/Chatbot";
 
 export default function Advisor() {
-  const { data: cities, isLoading: loadingCities } = useGetCities();
+  const { data: rawCities } = useGetCities();
+  const cities = (Array.isArray(rawCities) && rawCities.length > 0) ? rawCities : FALLBACK_CITIES;
+
   const [selectedCityId, setSelectedCityId] = useState<number | "">("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Import Chatbot dynamically to avoid circular dependency issues if any
-  // But we can just import it at the top normally.
-
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -28,10 +26,15 @@ export default function Advisor() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const { data: dataset, isLoading: loadingDataset } = useGetCityDataset(
+  const { data: rawDataset, isLoading: loadingDataset } = useGetCityDataset(
     selectedCityId !== "" ? selectedCityId : 0, 
     { query: { enabled: selectedCityId !== "", queryKey: ['dataset', selectedCityId] } }
   );
+
+  // Guarantee non-null dataset if city selected
+  const dataset = (selectedCityId !== "")
+    ? ((rawDataset && rawDataset.city) ? rawDataset : getFallbackCityDataset(selectedCityId))
+    : null;
 
   return (
     <div className="space-y-6 pb-12">
@@ -59,7 +62,7 @@ export default function Advisor() {
                 {selectedCityId === "" ? (
                   <span className="truncate font-medium text-muted-foreground truncate block">Choose a city to analyze...</span>
                 ) : (
-                  <><MapPin className="w-4 h-4 text-purple-400 flex-shrink-0" /> <span className="truncate font-medium block">{Array.isArray(cities) ? cities.find(c => c.id === selectedCityId)?.name : "Select City"}</span></>
+                  <><MapPin className="w-4 h-4 text-purple-400 flex-shrink-0" /> <span className="truncate font-medium block">{cities.find(c => c.id === selectedCityId)?.name || "Select City"}</span></>
                 )}
               </div>
               <ChevronDown className={`w-4 h-4 text-muted-foreground flex-shrink-0 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180 text-primary' : ''}`} />
@@ -85,7 +88,7 @@ export default function Advisor() {
                     
                     <div className="h-px bg-border/40 my-2 mx-4" />
                     
-                    {Array.isArray(cities) && cities.map((city) => (
+                    {cities.map((city) => (
                       <button
                         key={city.id}
                         onClick={() => { setSelectedCityId(city.id); setIsDropdownOpen(false); }}
@@ -115,7 +118,7 @@ export default function Advisor() {
         </div>
       )}
 
-      {dataset && !loadingDataset && (
+      {dataset && dataset.city && !loadingDataset && (
         <AdvisorResults city={dataset.city} />
       )}
 
@@ -132,24 +135,28 @@ export default function Advisor() {
 }
 
 function AdvisorResults({ city }: { city: any }) {
-  // Calculations based on requested spec
-  // (city.waterBodiesArea might be undefined if db wasn't pushed, fallback to 10)
-  const waterArea = city.waterBodiesArea || 10;
+  const safeCity = city || FALLBACK_CITIES[0];
+  const totalArea = Math.max(safeCity.totalArea || 1, 1);
+  const totalVehicles = safeCity.totalVehicles || 500000;
+  const forestCover = safeCity.forestCover || 5;
+  const urbanGreenSpace = safeCity.urbanGreenSpace || 8;
+  const populationDensity = safeCity.populationDensity || 1500;
+  const builtUpArea = safeCity.builtUpArea || 200;
+  const waterArea = (safeCity as any).waterBodiesArea || 10;
   
-  const vehicleDensity = city.totalVehicles / city.totalArea;
-  const greenRatio = (city.forestCover + city.urbanGreenSpace) / 100; // already in percentage terms normally, but spec says area/total. The db has forestCover as %, so let's treat it as ratio if / 100
-  const populationDensity = city.populationDensity; 
-  const waterIndex = waterArea / city.totalArea;
-  const builtRatio = city.builtUpArea / city.totalArea;
+  const vehicleDensity = totalVehicles / totalArea;
+  const greenRatio = (forestCover + urbanGreenSpace) / 100;
+  const waterIndex = waterArea / totalArea;
+  const builtRatio = builtUpArea / totalArea;
 
   // Heat Contribution AI Logic
   const rawVehicles = Math.min((vehicleDensity / 5000), 1) * 35; 
-  const rawGreen = Math.min((1 - greenRatio), 1) * 30;
+  const rawGreen = Math.min(Math.max((1 - greenRatio), 0), 1) * 30;
   const rawPop = Math.min((populationDensity / 15000), 1) * 20;
-  const rawWater = Math.min((1 - waterIndex), 1) * 15;
+  const rawWater = Math.min(Math.max((1 - waterIndex), 0), 1) * 15;
   const rawBuilt = Math.min((builtRatio), 1) * 25;
 
-  const totalRaw = rawVehicles + rawGreen + rawPop + rawWater + rawBuilt;
+  const totalRaw = Math.max(rawVehicles + rawGreen + rawPop + rawWater + rawBuilt, 1);
   
   const contributions = [
     { name: "Vehicle emissions", value: (rawVehicles / totalRaw) * 100, icon: Car, color: "text-red-400", bg: "bg-red-400" },
@@ -165,7 +172,7 @@ function AdvisorResults({ city }: { city: any }) {
     suggestions.push({
       trigger: "High vehicle density",
       actions: ["Encourage electric vehicles", "Create traffic restricted zones", "Promote public transport"],
-      impactText: `Reducing traffic by 15% in ${city.name}`,
+      impactText: `Reducing traffic by 15% in ${safeCity.name}`,
       impactCooling: "0.8°C",
       icon: Car
     });
@@ -174,7 +181,7 @@ function AdvisorResults({ city }: { city: any }) {
     suggestions.push({
       trigger: "Low green cover",
       actions: ["Increase urban tree plantation", "Create green corridors", "Develop new parks"],
-      impactText: `Planting 20,000 trees in ${city.name}`,
+      impactText: `Planting 20,000 trees in ${safeCity.name}`,
       impactCooling: "1.2°C",
       icon: TreePine
     });
@@ -183,7 +190,7 @@ function AdvisorResults({ city }: { city: any }) {
     suggestions.push({
       trigger: "Low water availability",
       actions: ["Build artificial lakes", "Restore ponds and rivers", "Install urban water fountains"],
-      impactText: `Creating 5 new water bodies in ${city.name}`,
+      impactText: `Creating 5 new water bodies in ${safeCity.name}`,
       impactCooling: "0.5°C",
       icon: Droplets
     });
@@ -192,7 +199,7 @@ function AdvisorResults({ city }: { city: any }) {
     suggestions.push({
       trigger: "High population density",
       actions: ["Create more open public spaces", "Increase green rooftops", "Designate heat-relief zones"],
-      impactText: `Expanding open spaces by 10% in ${city.name}`,
+      impactText: `Expanding open spaces by 10% in ${safeCity.name}`,
       impactCooling: "0.4°C",
       icon: Users
     });
@@ -201,14 +208,13 @@ function AdvisorResults({ city }: { city: any }) {
     suggestions.push({
       trigger: "Dense built-up area",
       actions: ["Install cool roofs", "Use reflective building materials", "Promote rooftop gardens"],
-      impactText: `Converting 20% roofs to cool roofs in ${city.name}`,
+      impactText: `Converting 20% roofs to cool roofs in ${safeCity.name}`,
       impactCooling: "0.9°C",
       icon: Building2
     });
   }
 
   // Score Calculation
-  // 100 is best. High heat contributors lower the score.
   const penalty = Math.min((totalRaw / 125) * 100, 95);
   const score = Math.round(100 - penalty);
   
@@ -261,12 +267,12 @@ function AdvisorResults({ city }: { city: any }) {
                   <span className="flex items-center gap-2 text-muted-foreground">
                     <c.icon className={`w-4 h-4 ${c.color}`} /> {c.name}
                   </span>
-                  <span className="text-foreground">{c.value.toFixed(1)}%</span>
+                  <span className="text-foreground">{(c.value || 0).toFixed(1)}%</span>
                 </div>
                 <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
                   <motion.div 
                     initial={{ width: 0 }} 
-                    animate={{ width: `${c.value}%` }} 
+                    animate={{ width: `${c.value || 0}%` }} 
                     transition={{ duration: 1, delay: i * 0.1 }}
                     className={`h-full ${c.bg} rounded-full`}
                   />
