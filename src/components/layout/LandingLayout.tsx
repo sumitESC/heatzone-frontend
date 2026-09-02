@@ -1,6 +1,6 @@
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface LandingLayoutProps {
   children: ReactNode;
@@ -8,13 +8,7 @@ interface LandingLayoutProps {
 
 export function LandingLayout({ children }: LandingLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const { scrollY } = useScroll();
   const [location] = useLocation();
-
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    setScrolled(latest > 60);
-  });
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -54,26 +48,21 @@ export function LandingLayout({ children }: LandingLayoutProps) {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-foreground selection:text-background">
 
-      {/* ─── Animated Top Navigation with Live UP Stream ─── */}
+      {/* ─── High-Contrast Dark Glassmorphism Top Navigation Bar ─── */}
       <motion.header
-        className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+        className="fixed top-0 left-0 right-0 z-50 bg-[#090d16]/95 backdrop-blur-xl border-b border-white/10 shadow-2xl text-white transition-all duration-300"
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        style={{
-          backgroundColor: scrolled ? "hsl(var(--background) / 0.95)" : "rgba(10, 15, 30, 0.9)",
-          backdropFilter: "blur(20px)",
-          borderBottom: scrolled ? "1px solid hsl(var(--border) / 0.4)" : "1px solid rgba(255, 255, 255, 0.1)",
-        }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
         {/* Top Ticker Strip */}
-        <div className="w-full bg-primary/20 border-b border-white/10 py-1.5 px-4 sm:px-6 text-xs font-mono flex items-center justify-between overflow-hidden">
+        <div className="w-full bg-[#030712] border-b border-white/10 py-1.5 px-4 sm:px-6 text-xs font-mono flex items-center justify-between overflow-hidden">
           <div className="flex items-center gap-3 shrink-0">
             <span className="flex items-center gap-1.5 font-bold text-blue-400 bg-blue-500/20 px-2.5 py-0.5 rounded-full border border-blue-500/30 text-[11px]">
               <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
               LIVE UP CLIMATE STREAM
             </span>
-            <span className="hidden md:inline text-white/60 text-[11px]">75 Districts Monitored</span>
+            <span className="hidden md:inline text-gray-400 text-[11px]">75 Districts Monitored</span>
           </div>
 
           <AnimatePresence mode="wait">
@@ -89,7 +78,7 @@ export function LandingLayout({ children }: LandingLayoutProps) {
               <span className="font-bold text-yellow-400">{currentTicker.name.toUpperCase()}</span>
               <span>Temp: <strong className="text-red-400">{currentTicker.temp}</strong></span>
               <span className="hidden sm:inline">Risk: <strong className="text-orange-400">{currentTicker.risk}</strong></span>
-              <span className="hidden lg:inline text-white/60">({currentTicker.status})</span>
+              <span className="hidden lg:inline text-gray-400">({currentTicker.status})</span>
             </motion.div>
           </AnimatePresence>
 
@@ -103,7 +92,7 @@ export function LandingLayout({ children }: LandingLayoutProps) {
           {/* Logo */}
           <Link href="/" className="relative z-50">
             <motion.span
-              className="font-display font-bold text-xl tracking-[0.2em] uppercase text-white"
+              className="font-display font-black text-xl tracking-[0.2em] uppercase text-white"
               transition={{ duration: 0.3 }}
             >
               HeatZone AI
@@ -116,7 +105,7 @@ export function LandingLayout({ children }: LandingLayoutProps) {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium tracking-widest uppercase transition-opacity hover:opacity-60 text-white"
+                className="text-xs font-bold tracking-widest uppercase text-gray-200 hover:text-white transition-colors"
               >
                 {link.label}
               </Link>
@@ -127,7 +116,7 @@ export function LandingLayout({ children }: LandingLayoutProps) {
           <div className="flex items-center gap-4">
             <Link
               href="/dashboard"
-              className="hidden lg:inline-flex text-xs font-mono tracking-widest px-6 py-2.5 uppercase transition-all duration-300 border border-white/30 text-white hover:bg-white hover:text-black font-bold"
+              className="hidden lg:inline-flex text-xs font-mono tracking-widest px-6 py-2.5 uppercase transition-all duration-300 bg-white text-black hover:bg-gray-200 font-bold rounded-lg shadow-md"
             >
               Enter Dashboard →
             </Link>
@@ -156,7 +145,7 @@ export function LandingLayout({ children }: LandingLayoutProps) {
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            className="fixed inset-0 z-40 bg-background flex flex-col items-center justify-center gap-8"
+            className="fixed inset-0 z-40 bg-[#090d16] text-white flex flex-col items-center justify-center gap-8"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
@@ -171,7 +160,7 @@ export function LandingLayout({ children }: LandingLayoutProps) {
               >
                 <Link
                   href={link.href}
-                  className="font-display text-4xl uppercase tracking-wider hover:opacity-60 transition-opacity"
+                  className="font-display text-4xl uppercase tracking-wider text-white hover:text-blue-400 transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {link.label}
@@ -185,7 +174,7 @@ export function LandingLayout({ children }: LandingLayoutProps) {
             >
               <Link
                 href="/dashboard"
-                className="font-mono text-xs tracking-widest uppercase border border-foreground/30 px-8 py-4 mt-8 hover:bg-foreground hover:text-background transition-colors"
+                className="font-mono text-xs tracking-widest uppercase bg-white text-black font-bold px-8 py-4 mt-8 hover:bg-gray-200 transition-colors rounded-xl"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Enter Dashboard →
