@@ -727,6 +727,18 @@ function parseMessageContent(content: string): React.ReactNode[] {
     .replace(/\[PLAN_START\][\s\S]*?\[PLAN_END\]/g, "")
     .replace(/\[TASK_DONE:[^\]]*\]/g, "")
     .replace(/\[SPEED:[^\]]*\]/g, "")
+    .replace(/!\[.*?\]\((https?:\/\/[^\s)]+)\)/gi, (match, url) => {
+      const cityMatch = url.match(/(prayagraj|lucknow|kanpur|varanasi|agra|ghaziabad|noida|meerut|bareilly|gorakhpur|ayodhya|jhansi)/i);
+      return cityMatch ? `[RENDER_MAP:${cityMatch[1].toLowerCase()}]` : `[RENDER_NASA_MAP]`;
+    })
+    .replace(/https?:\/\/[^\s)]+\.(png|jpg|jpeg|svg|webp)/gi, (match) => {
+      const cityMatch = match.match(/(prayagraj|lucknow|kanpur|varanasi|agra|ghaziabad|noida|meerut|bareilly|gorakhpur|ayodhya|jhansi)/i);
+      return cityMatch ? `[RENDER_MAP:${cityMatch[1].toLowerCase()}]` : `[RENDER_NASA_MAP]`;
+    })
+    .replace(/https?:\/\/heatzone\.ai\/[^\s)]+/gi, (match) => {
+      const cityMatch = match.match(/(prayagraj|lucknow|kanpur|varanasi|agra|ghaziabad|noida|meerut|bareilly|gorakhpur|ayodhya|jhansi)/i);
+      return cityMatch ? `[RENDER_MAP:${cityMatch[1].toLowerCase()}]` : `[RENDER_NASA_MAP]`;
+    })
     .replace(/^\s*[\r\n]/gm, "") // remove empty lines left by tag stripping
     .trim();
 
@@ -904,6 +916,16 @@ export function Chatbot({ contextData }: { contextData: any }) {
     
     const systemPrompt = `You are Aria, Chief AI Urban Climate & Heat Risk Advisor for HeatZone AI.
     IDENTITY: Specialist in urban heat islands, satellite climate metrics (NDVI, NDBI), heat risk scores, 16-day weather forecasts, and heat mitigation across 75+ Uttar Pradesh cities.
+    CONTEXT DATA: ${JSON.stringify(contextData)}
+
+    STRICT VISUAL WIDGET FORMATTING INSTRUCTIONS:
+    - NEVER invent or output fake image URLs (such as .png, .jpg, or heatzone.ai links).
+    - When asked for a map, heat map, forecast, or comparison, use ONLY these interactive widget tags:
+      1. For city maps: [RENDER_MAP:cityname] (e.g. [RENDER_MAP:prayagraj] or [RENDER_MAP:lucknow])
+      2. For NASA satellite thermal map: [RENDER_NASA_MAP]
+      3. For 16-day weather/heat forecast: [RENDER_FORECAST:cityname] (e.g. [RENDER_FORECAST:kanpur])
+      4. For multi-city heat comparison: [RENDER_COMPARISON:lucknow,kanpur,prayagraj]
+
     RULES: Keep responses data-driven, structured, concise, and focused on heat risk, weather, and climate mitigation. Use markdown formatting.`;
 
     let resultText = "";
