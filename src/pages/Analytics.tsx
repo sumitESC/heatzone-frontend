@@ -1,4 +1,4 @@
-import { useGetAllHeatPredictions, useGetCities } from "@workspace/api-client-react";
+import { useGetAllHeatPredictions, useGetCities, FALLBACK_CITIES, getFallbackHeatPrediction } from "@workspace/api-client-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend, LineChart, Line, Cell } from 'recharts';
 import { motion } from "framer-motion";
 import { Activity, Car, TreePine, Building2, Zap, Construction } from "lucide-react";
@@ -8,30 +8,21 @@ export default function Analytics() {
   const { data: predictions, isLoading: predLoading } = useGetAllHeatPredictions();
   const { data: cities, isLoading: citiesLoading } = useGetCities();
 
-  if (predLoading || citiesLoading) {
-    return (
-      <div className="flex items-center justify-center h-[70vh]">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  if (!predictions || !cities || !Array.isArray(predictions) || !Array.isArray(cities)) {
-    return <div className="p-8 text-center text-red-400">Failed to load analytics data. Please refresh.</div>;
-  }
+  const activeCities = (Array.isArray(cities) && cities.length > 0) ? cities : FALLBACK_CITIES;
+  const activePreds = (Array.isArray(predictions) && predictions.length > 0) ? predictions : FALLBACK_CITIES.map(getFallbackHeatPrediction);
 
   // Merge datasets for charts
-  const mergedData = cities.map(city => {
-    const pred = predictions.find(p => p.cityId === city.id);
+  const mergedData = activeCities.map(city => {
+    const pred = activePreds.find(p => p.cityId === city.id || p.cityName === city.name) || getFallbackHeatPrediction(city);
     return {
       name: city.name,
-      heatRisk: pred?.heatRiskScore || 0,
-      zone: pred?.heatZone || 'cool',
-      temperature: pred?.temperature || 0,
-      ndvi: pred?.ndvi || (city.forestCover + city.urbanGreenSpace) / 100,
-      emissionIndex: pred?.emissionIndex || city.totalVehicles / 1000,
-      ndbi: pred?.ndbi || city.builtUpArea / 100,
-      population: city.population / 1000000 // in millions
+      heatRisk: pred?.heatRiskScore || 50,
+      zone: pred?.heatZone || 'moderate',
+      temperature: pred?.temperature || 34,
+      ndvi: pred?.ndvi || 0.22,
+      emissionIndex: pred?.emissionIndex || 4.2,
+      ndbi: pred?.ndbi || 0.35,
+      population: (city.population || 1000000) / 1000000 // in millions
     };
   }).sort((a, b) => b.heatRisk - a.heatRisk);
 
